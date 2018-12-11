@@ -1,0 +1,14 @@
+# Compiled files
+__pycache__/
+*.py[cod]
+
+# Datasets
+data/*
+!data/.keep
+
+# Trained networks
+*.pt
+
+# Temp data files
+*.npy
+*.pickle
