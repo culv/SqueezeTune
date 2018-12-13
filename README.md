@@ -1,4 +1,8 @@
-### The Predicament
+# SqueezeTune
+
+Finetuning SqueezeNet to achieve high accuracies without a GPU!
+
+### The Problem
 
 Most deep learning is done on powerful GPUs, but what if you don't have a GPU? Even worse, what if your computer's CPU isn't all that powerful either?
 
@@ -84,7 +88,7 @@ SqueezeNet stacks these blocks together to create a model with **AlexNet level a
 
 They combined these ideas into a re-usable block called a **Fire module** that uses 1x1 filters to reduce the number of input channels
 
-<sup>1</sup>[*SqueezeNet: AleNet-level accuracy with 50X fewer parameters and <0.5MB model size*, Iandola et al.](https://arxiv.org/abs/1602.07360)
+<sup>1</sup>[*SqueezeNet: AlexNet-level accuracy with 50X fewer parameters and <0.5MB model size*, Iandola et al.](https://arxiv.org/abs/1602.07360)
 
 <sup>2</sup>[*Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification*, He et al.](https://arxiv.org/abs/1502.01852)
 
