@@ -13,14 +13,18 @@ Finetuning simply means **re-using** the weights of a **pre-trained** network (V
     *This is as simple as changing the number of outputs of the network to the number of classes in your data (this may require looking at the architecture beforehand to see what kind of layer, e.g. Conv2d or Linear, is used):*
     
 ```python
-# First, you'll need access to torchvision's pre-trained models and PyTorch's neural network modules (i.e. your "building blocks")
+# First, you'll need access to torchvision's pre-trained models and PyTorch's neural network
+# modules (i.e. your "building blocks")
 from torchvision import models
 import torch.nn as nn
 
 # Specify the number of classes you're reshaping to
 num_classes = 10
 
-# Load your choice of pre-trained network and reshape the classification layer. For most architectures, like ResNet and VGGNet, the classification layer is fully-connected (nn.Linear) which can be reshaped by changing the 'out_features' attribute of the nn.Linear module or replacing it entirely
+# Load your choice of pre-trained network and reshape the classification layer. For most
+# architectures, like ResNet and VGGNet, the classification layer is fully-connected (nn.Linear)
+# which can be reshaped by changing the 'out_features' attribute of the nn.Linear module or
+# replacing it entirely
 network = models.resnet18(pretrained=True)
 network.fc.out_features = num_classes
 
@@ -28,7 +32,9 @@ network.fc.out_features = num_classes
 in_feats = network.fc.in_features
 network.fc = nn.Linear(in, num_classes)
 
-# For SqueezeNet or other all-convolutional networks, the classification layer will be convolutional (nn.Conv2d). To change the output features you can update the 'out_channels' attribute of the nn.Conv2d module, or replace it
+# For SqueezeNet or other all-convolutional networks, the classification layer will be
+# convolutional (nn.Conv2d). To change the output features you can update the 'out_channels'
+# attribute of the nn.Conv2d module, or replace it
 network = models.squeezenet1_1(pretrained=True)
 network.classifier[1].out_channels = num_classes
 
@@ -38,7 +44,8 @@ k = network.classifier[1].kernel_size
 s = network.classifier[1].stride
 network.classifier[1] = nn.Conv2d(in_chans, num_classes, kernel_size=k, stride=s)
 
-# With the line below you can print the architecture of your network. This can give you insight on the types of layers and what you need to change
+# With the line below you can print the architecture of your network. This can give you
+# insight on the types of layers and what you need to change
 print(network.modules)
 ```
 * Decide which parameters you want to tune
@@ -54,7 +61,8 @@ for p in network.parameters():
 for p in network.classifier.parameters():
     p.requires_grad = True
     
-# If you want to make last layer of feature generator trainable. Similarly for the last two, or three layers you would use the slice [-2:-1] or [-3:-1] 
+# If you want to make last layer of feature generator trainable. Similarly for the last two,
+# or three layers you would use the slice [-2:-1] or [-3:-1] 
 for p in network.features[-1].parameters():
     p.requires_grad = True
 ```
@@ -68,13 +76,13 @@ SqueezeNet<sup>1</sup> is the answer to our problem. Its creators saw the same p
 
 This led to the development of the **Fire module**, a building block that uses 1x1 filters to reduce input channels followed by a mixture of 1x1 and 3x3 filters.
 
-![alt text](https://github.com/culv/SqueezeTune/blob/master/images/squeezenet_fire_module.PNG "Fire module")
+<p align="center">
+<img src="https://github.com/culv/SqueezeTune/blob/master/images/squeezenet_fire_module.PNG" title="Fire module")
+</p>
 
 SqueezeNet stacks these blocks together to create a model with **AlexNet level accuracy** while maintaining **~0.5MB model size**. This makes it perfect for our needs!
 
 They combined these ideas into a re-usable block called a **Fire module** that uses 1x1 filters to reduce the number of input channels
-
-
 
 <sup>1</sup>[*SqueezeNet: AleNet-level accuracy with 50X fewer parameters and <0.5MB model size*, Iandola et al.](https://arxiv.org/abs/1602.07360)
 
@@ -82,7 +90,7 @@ They combined these ideas into a re-usable block called a **Fire module** that u
 
 ### Results
 
-SqueezeNet was finetuned on three datasets: [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html), [ETH-80](http://people.csail.mit.edu/jjl/libpmk/samples/eth.html) and [AR faces](http://www2.ece.ohio-state.edu/~aleix/ARdatabase.html). Datasets were split into train, validation, and test sets: train was used to update model parameters, validation was used to monitor training and adjust hyperparameters, and test was used to evaluate the fully-trained model. In addition to test accuracy, a confusion matrix was used visualize *precision* and *recall*.
+SqueezeNet was finetuned on three datasets: [CIFAR-10](https://www.cs.toronto.edu/~kriz/cifar.html), [ETH-80](http://people.csail.mit.edu/jjl/libpmk/samples/eth.html) and [AR faces](http://www2.ece.ohio-state.edu/~aleix/ARdatabase.html). Each datasets was split into a train, validation, and test set using *stratified* sampling, which ensures each subset has the same class ratios as the original dataset. The train set was used to update model parameters, validation set was used to monitor training and adjust hyperparameters, and test set was used to evaluate the fully-trained model. In addition to test accuracy, a confusion matrix was used visualize *precision* and *recall*.
 
 ##### CIFAR-10
 
@@ -90,9 +98,9 @@ This dataset contains 10 classes: airplanes, automobiles, birds, cats, deers, do
 
 The model was finetuned for 5 epochs and achieved a test accuracy of **82.59%**. From the confusion matrix below we can also see the model had excellent precision and recall.
 
-![CIFAR-10 training](https://github.com/culv/SqueezeTune/blob/master/images/cifar10_accuracy.png "CIFAR-10 training")
-
-![CIFAR-10 confusion matrix](https://github.com/culv/SqueezeTune/blob/master/images/cifar10_confusion.png "CIFAR-10 confusion matrix")
+<p align="center">
+<img src="https://github.com/culv/SqueezeTune/blob/master/images/cifar10_accuracy.png" width="46%" title="Training (CIFAR-10)"> <img src="https://github.com/culv/SqueezeTune/blob/master/images/cifar10_confusion.png" width="42.5%" title="Confusion matrix (CIFAR-10)">
+</p>
 
 ##### ETH-80
 
@@ -100,9 +108,9 @@ This dataset contains 8 classes: apples, pears, tomatoes, cows, dogs, horses, cu
 
 The model was finetuned for 10 epochs and achieved a test accuracy of **99.08%**. The confusion matrix indicates excellent precision and recall.
 
-![ETH-80 training](https://github.com/culv/SqueezeTune/blob/master/images/eth80_accuracy.png "ETH-80 training")
-
-![ETH-80 confusion matrix](https://github.com/culv/SqueezeTune/blob/master/images/eth80_confusion.png "ETH-80 confusion matrix")
+<p align="center">
+<img src="https://github.com/culv/SqueezeTune/blob/master/images/eth80_accuracy.png" width="46%" title="Training (ETH-80)"> <img src="https://github.com/culv/SqueezeTune/blob/master/images/eth80_confusion.png" width="42.5%" title="Confusion matrix (ETH-80)">
+</p>
 
 ##### AR Faces
 
@@ -110,10 +118,9 @@ This dataset contains 100 classes corresponding to 100 different individuals' fa
 
 The model was finetuned for 20 epochs and achieved a test accuracy of **79.03%**. The confusion matrix indicates good precision and recall, however we can also see which identities were consistently mistaken for another.
 
-![AR faces training](https://github.com/culv/SqueezeTune/blob/master/images/ar_faces_accuracy.png "AR faces training")
-
-![AR faces confusion matrix](https://github.com/culv/SqueezeTune/blob/master/images/ar_faces_confusion.png "AR faces confusion matrix")
-
+<p align="center">
+<img src="https://github.com/culv/SqueezeTune/blob/master/images/ar_faces_accuracy.png" width="46%" title="Training (AR faces)"> <img src="https://github.com/culv/SqueezeTune/blob/master/images/ar_faces_confusion.png" width="42.5%" title="Confusion matrix (AR faces)">
+</p>
 
 
 
